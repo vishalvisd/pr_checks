@@ -1,0 +1,43 @@
+# Check out https://hub.docker.com/_/node to select a new base image
+FROM nikolaik/python-nodejs:python3.7-nodejs10-stretch
+
+# Set to a non-root built-in user `node`
+USER root
+
+# Create app directory (with user `node`)
+RUN mkdir -p /home/node/app
+
+WORKDIR /home/node/app
+
+RUN apt-get update && apt-get install -y procps
+
+RUN pip install flake8
+
+RUN pip install tox
+
+RUN pip install wemake-python-styleguide
+
+RUN pip install coverage
+
+RUN pip install wemake-python-styleguide
+
+RUN pip install pydash
+
+# Install Powershell
+
+RUN apt-get install -y curl gnupg apt-transport-https
+
+# Import the public repository GPG keys
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+
+# Register the Microsoft Product feed
+RUN sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-stretch-prod stretch main" > /etc/apt/sources.list.d/microsoft.list'
+
+# Update the list of products
+RUN apt-get update
+
+# Install PowerShell
+RUN apt-get install -y powershell
+
+EXPOSE 8889 9229
+CMD ["tail", "-f", "/dev/null"]

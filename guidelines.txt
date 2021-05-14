@@ -1,0 +1,1 @@
+process.env should be used only in src/index.ts. In other words, the index file should only deal with enviornment variable, and the rest of the app should be unaware or use any variables from environment.

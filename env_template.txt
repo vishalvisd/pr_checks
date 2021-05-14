@@ -1,0 +1,15 @@
+GITHUB_PRIVATE_KEY= <RSA>
+GITHUB_APP_IDENTIFIER= <>
+GITHUB_WEBHOOK_SECRET= <>
+GHE_HOST=github.hpe.com
+GIT_REMOTE_NAME = <"github.hpe.com/orgname/reponame.git">
+SMEE_CHANNEL = <"BjQcW8pR7zx42VE1">
+LINTTER_CHECK_OMITTED_PATHS = <"S-Build/test, virtualenv">
+PATH_TO_FLAKE8_CONFIG_IN_CODEBASE = <"./.flake8">
+PATH_TO_PSLINT_CONFIG_IN_CODEBASE = <"./.psLintCustomRule.psm1">
+APP_SERVER_HOST=<0.0.0.0>
+APP_SERVER_PORT=<3000>
+http_proxy=<"http://web-proxy.cce.hp.com:8088">
+https_proxy=<"http://web-proxy.cce.hp.com:8088">
+CHECK_REPORTS_DIR_RELATIVE_PATH = <"./reports">
+REPORTS_FILE_SERVER_PORT = <8889>
