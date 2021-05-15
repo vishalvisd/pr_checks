@@ -1,0 +1,356 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Ep-vmelement-pr-checks by vishal-daga</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+</head>
+<body>
+
+<div id="banner">
+    <a href="https://github.hpe.com/vishal-daga/ep-vmelement-pr-checks"><span id="logo"></span></a>
+</div><!-- end banner -->
+
+<div class="wrapper">
+    <nav>
+        <ul></ul>
+    </nav>
+    <section>
+        <p><em>Doc Ver: 1.0</em></p>
+        <table>
+            <thead>
+            <tr>
+                <th>Abbreviation</th>
+                <th>Meaning</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><code>codebase</code></td>
+                <td>The <a href="https://github.hpe.com/Solutions/EP-VMElement">solution/EP-VMElement</a> project</td>
+            </tr>
+            <tr>
+                <td><code>application</code></td>
+                <td>The <a href="https://github.hpe.com/vishal-daga/ep-vmelement-pr-checks">PR checks application</a>    project</td>
+            </tr>
+            </tbody>
+        </table>
+        <h1>
+            <a id="general-overview" class="anchor" href="#general-overview" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>General Overview</h1>
+        <ul>
+            <li>
+                <p>The checks are run only when a pull request is created or a commit is pushed to a branch for which a pull request is already present.</p>
+            </li>
+            <li>
+                <p>The <code>application</code> executes the checks for test/code-coverage and lint issues the same way a developers would run on their local workstation. Read section on <a href="#code-lints-check"><em>Lint Check</em></a> and <a href="#test-suite"><em>Test Suite</em></a> for details.</p>
+            </li>
+            <li>
+                <p>The <code>application</code> runs only those <code>test_names</code> that are mentioned in the PR description and no other <em>tests</em> that may be present in the <code>codebase</code>'s test folder, and lint check are runs for only the files that are modified in the PR. The <em>SCID JSON</em> for running the test will be picked from <code>SCID</code> folder at the root of the <code>codebase</code>. Reviewer discretion is required to verify that the code submitted is backed by appropriate testing.</p>
+            </li>
+            <li>
+                <p><code>tester.py</code> script <strong>provides the single interface</strong> for <em>creating test, running test and generating</em> the coverage report for both python and powershell test code. Read more about it on <em><a href="#test-suite">test-suite</a></em> section below.</p>
+            </li>
+            <li>
+                <p>Python linter used is <a href="https://flake8.pycqa.org/"><em>flake8</em></a> and lint rules are provided by <a href="https://github.com/wemake-services/wemake-python-styleguide">wemake python style guide</a>). The rules set is thus a union of <em>flake8</em> default rules and those added by <em>wemake style guide</em>. Custom rules are specified through <code>.flake8</code> file located at the root of the <code>codebase</code>. PowerShell linter used in <a href="https://github.com/PowerShell/PSScriptAnalyzer"><em>PSScriptAnalyzer</em></a> and custom rules are specified through <code>.psLintRule.psm1</code> file located at the root of the <code>codebase</code> currently.*</p>
+            </li>
+            <li>
+                <p>Test-suite related files and the Linter custom rules are considered to be <strong>locked files</strong> and only PR designated for such file modification should modify those files. Reviewer can ignore <em><a href="#locked-file-modification-check">Locked files modification check</a></em> fail for such PR which are exclusively for modification of locked files.</p>
+            </li>
+        </ul>
+        <hr>
+        <h1>
+            <a id="dev-dependencies" class="anchor" href="#dev-dependencies" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Dev-Dependencies</h1>
+        <p>These dependencies are not required by the actual automation code.
+            They are required by test runners and linters and needs to be installed in the coding/hosting environment.</p>
+        <table>
+            <thead>
+            <tr>
+                <th>Library</th>
+                <th>Version (Major/Minor version)</th>
+                <th>Used for</th>
+                <th>Installation Command</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>flake8</td>
+                <td>3</td>
+                <td>Python linter (also implement a default python styleguide)</td>
+                <td>pip install flake8==3.*</td>
+            </tr>
+            <tr>
+                <td>wemake-python-styleguide</td>
+                <td>0.15</td>
+                <td>Python code styleguide</td>
+                <td>pip install wemake-python-styleguide==0.15.*</td>
+            </tr>
+            <tr>
+                <td>tox</td>
+                <td>3</td>
+                <td>Python code test runner</td>
+                <td>pip install tox==3.*</td>
+            </tr>
+            <tr>
+                <td>PSScriptAnalyzer</td>
+                <td>1.19</td>
+                <td>PowerShell linter</td>
+                <td>PS &gt; Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.19.1</td>
+            </tr>
+            <tr>
+                <td>Pester</td>
+                <td>5</td>
+                <td>PowerShell test runner</td>
+                <td>PS &gt; Install-Module -Name Pester -RequiredVersion 5.1.1</td>
+            </tr>
+            <tr>
+                <td>ReportGenerator</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+        <p>In addition, the python script 'tester.py' uses the general utility library 'pydash', so make sure this is also available in your environment (pip install pydash).</p>
+        <hr>
+        <h1>
+            <a id="code-lints-check" class="anchor" href="#code-lints-check" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>CODE LINTS CHECK</h1>
+        <h2>
+            <a id="overview" class="anchor" href="#overview" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview</h2>
+        <p>The Lint Check makes sure that the conventions as mentioned in the coding guideline are followed as well as complexity and general good coding standard were followed in the code being submitted for review.</p>
+        <p>A git diff between current branch head commit and the base branch is made to get the list of modified/added files. Of these files, only those ending with <code>.py</code> and (<code>.psm1</code>, <code>.ps1</code>) are considered as Python and PowerShell files respectively. These files' path are checked against "<code>LINTTER_CHECK_OMITTED_PATHS</code>" environment variable and are filtered out if their path is listed as omitted path. The remaining files are checked for linting issues with the respective linters, using custom rule as defined in .flake8 and .psLintRule.psm1 located at the root of the <code>codebase</code>. <em>The check will fail unless <strong>all</strong> reported lint issues are fixed.</em></p>
+        <h2>
+            <a id="running-the-check-on-local" class="anchor" href="#running-the-check-on-local" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Running the check on local</h2>
+        <p>Running lint check locally is no different than how a developer would run the lint check on local workstation in absence of the <code>application</code>.
+            Install the linter's dependencies as mentioned above and run linter as usual; the application does the same thing! The custom linter rules for Python and PowerShell linter are defined through files named - <code>.flake8</code> and <code>.psLintRule.psm1</code> respectively, both of which are present at the root of the <code>codebase</code>, They specify custom rules that override default rules.</p>
+        <blockquote>
+            <p><em>Note, both these files are among <em><code>locked files</code></em>, and no PR [except &gt; a PR dedicated to modify these files] should do any modification to<br>
+                these files. [<strong>IMPORTANT</strong>] Reviewer should not approve such a PR<br>
+                having modification to locked files. The <code>LOCKED FILE MODIFICATION CHECK</code> will fail if such file/s modified.</em></p>
+        </blockquote>
+        <blockquote>
+            <p>Most IDEs support on the fly lint check. See docs for your favourite IDE on how to configure on fly lint check while using the custom rules. Below is how VSCode IDE can be configured:-<br>
+            </p>
+        </blockquote>
+        <h3>
+            <a id="python" class="anchor" href="#python" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Python</h3>
+        <p>flake8 accepts customization defined in file named <code>.flake8</code> which is already defined and present at root of <code>codebase</code>.<br>
+            Run</p>
+        <blockquote>
+            <p><code>flake8 &lt;filePath/folderPath&gt;</code><br>
+                when running the command from root of the <code>codebase</code>. Else, specify the custom rule path with --config parameter: `</p>
+        </blockquote>
+        <blockquote>
+            <p>flake8 --config &lt;codebase/.flake8&gt; &lt;filePath/folderPath&gt;`</p>
+        </blockquote>
+        <p><strong>The <code>application</code> runs all checks at the state of code at the commit HEAD.</strong> This means, before pushing code and generating PR, make sure to pull from the base branch
+            (which is also a standard practice) <strong>as the locked files may be modified at the base branch</strong>. In such a case, the <code>locked file modification</code> check will fail even though
+            no locked files were modified locally- (pull from base branch in such a case and the check should pass).</p>
+        <p>On Pull Request related events [creation/modifications], the application will checkout the HEAD commit, and then execute the command <code>flake8 --config &lt;codebase/.flake8&gt; &lt;file_path&gt;</code> and <code>Invoke-ScriptAnalyzer -Path &lt;codebase/.psLintRule.psm1&gt; &lt;file_path&gt;</code> for Python and PowerShell files respectively on the checked-out code.</p>
+        <h3>
+            <a id="powershell" class="anchor" href="#powershell" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>PowerShell</h3>
+
+        <hr>
+        <h1>
+            <a id="unit-testing-and-its-code-coverage-check" class="anchor" href="#unit-testing-and-its-code-coverage-check" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>UNIT TESTING AND IT'S CODE COVERAGE CHECK</h1>
+        <p>To understand this check better, it is advisable to have some familiarity with the <a href="#test-suite">Test Suite</a> documented below.</p>
+        <h2>
+            <a id="overview-1" class="anchor" href="#overview-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview</h2>
+        <p>This check is intended to make sure that the code submitted for review has backing of proper testing.<br>
+            The automation code is related to some or other SAT task, where the call stack flow from designated <em><strong><code>caller</code></strong></em> to a <em><strong><code>called</code></strong></em> script. All other scripts are there to support the called script in performing the automation. As mentioned in the previous section, a test script is written for a SAT task <em><strong><code>called</code></strong></em> script. For any PR submitted, having modification to any code should mention the <em>test names</em> which the <code>application</code> will run such that the reviewer will have an idea of how much of the code changes are covered by the testing.</p>
+        <p>Add the <em>test names</em> at the designated place in the PR template when generating the PR. The <code>application</code> will run only those tests and provide the result of the run. The <code>application</code> will run same syntax as can be run locally - <br>
+            <code>python tester.py -n &lt;test_name_1&gt; -n &lt;test_name_2&gt; ...</code> <br><br>
+            As always, every check is run on the current state of code at the commit id where the PR is at. Unless there is no runtime error when executing the test, the check will pass. The check result will provide the test's code-coverage report as well. It is solely on reviewer discretion to move ahead with review given the percentage of modified code coverage of the PR. The minimum acceptable code coverage is <em><strong>60%</strong></em>. Anything above is good and desirable.</p>
+        <h2>
+            <a id="running-the-check-on-local-1" class="anchor" href="#running-the-check-on-local-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Running the check on local</h2>
+        <p>Running lint check locally is no different than how a developer would run the test cases on local workstation in absence of the <code>application</code>. Execute the tester.py
+            script as mentioned below in the <a href="#test-suite">test suite</a> section; the application does the same thing!</p>
+        <p>Suppose when creating a pull request for a new automation, ex. <em>Configure VLCM</em>. Then as per the guideline in <a href="#test-suite">test suite</a>, there would be a test created also named <em>Configure VLCM</em> using below command:-</p>
+        <blockquote>
+            <p>python tester.py create -n "Configure VLCM" -t [ps | py]</p>
+        </blockquote>
+        <br>
+        To run this test, use below command :-
+        <blockquote>
+            <p><code>python tester.py run -n "Configure VLCM"</code></p>
+        </blockquote>
+        <br>
+        <p>The application will run the same command. The application will know which name to run by reading the PR description where the test name will be mentioned by PR creator at the appropriate place in the PR description template.</p>
+        <p>If it's a bug fix, then also the bug fix will affect certain number of SAT task. In this case, the PR description should mention all those test names that application should run. The application will run the same command needed to run those test on local :-</p>
+        <blockquote>
+            <p>python tester.py run -n "Update VCSA" -n "Deploy Onveview" -n "Configure Oneview"</p>
+        </blockquote>
+        <hr>
+        <h1>
+            <a id="locked-file-modification-check" class="anchor" href="#locked-file-modification-check" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>LOCKED FILE MODIFICATION CHECK</h1>
+        <h2>
+            <a id="overview-2" class="anchor" href="#overview-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview</h2>
+        <p>The check will make sure that no such files related to lint configuration, test suite, etc., that may affect any check results are modified in the code being submitted for PR review. The locked file are specified through environment variable <code>LOCKED_FILES</code> and currently <code>codebase/.flake8, codebase/.psLintRules.psm1, S-Build/test/tox.ini, S-Build/test/tester.py</code> are locked files. As all check run at the state of the code at the commit on the branch request for PR, it is necessary that such files are not modified as they may directly affect the test result.</p>
+        <p>The check will fail even if the locked file/s are modified at the base branch, as developer must be using the most updated version of such local files.
+            If such file haven't modified locally and still this check fails- take a pull from the base branch that the PR is generated to and the check should pass.
+            In general, taking a pull from the base branch before generating PR to it is a standard practice.</p>
+        <h2>
+            <a id="running-the-check-on-local-2" class="anchor" href="#running-the-check-on-local-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Running the check on local</h2>
+        <p>Just make sure no unnecessary modification to lint, test configuration, etc., files are made in the PR. Using <code>git status</code> will tell about this.</p>
+        <hr>
+        <h1>
+            <a id="test-suite" class="anchor" href="#test-suite" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Test Suite</h1>
+        <p>All test related code/files are currently under <code>codebase</code>/<code>&lt;Plugin(S-Build)&gt;/test</code> folder.
+            A python script named <code>tester.py</code> provides a single interface for creating tests, running test and generating the test coverage report for both Python and PowerShell.
+            The Developers on their local workstation and the <code>application</code> both uses this script for any test related commands.</p>
+        <h3>
+            <a id="testtesterpy" class="anchor" href="#testtesterpy" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>test/tester.py</h3>
+        <p><em><strong>Creating a test with tester.py</strong></em></p>
+        <blockquote>
+            <p>python tester.py create [--type | -t] &lt;py | ps&gt; [--name | -n] &lt;test_name&gt;</p>
+        </blockquote>
+        <p>Example:</p>
+        <blockquote>
+            <p>python tester.py -t py -n configure_vlcm
+                (OR for PowerShell- python tester.py -t ps -n a_powershell_module)</p>
+        </blockquote>
+        <p>which will create a folder named "configure_vlcm" inside the <code>test/test_src</code> folder.
+            Inside this folder, it will also create a folder named "data" (<code>test/test_src/configure_vlcm/data</code>) which is used to keep test related data files
+            and a file named "test_configure_vlcm.py" (<code>test/test_src/configure_vlcm/test_configure_vlcm.py</code>) which is the test script file where the developer
+            will be writing the code that simulate the task script. The higher the simulation the higher would be the test code coverage.
+            The test file is also populated with a <a href="#test-boilerplate-code-generated-with-testerpy-create-">boilerplate code</a> (a basic standard testing code structure)
+            which provides a basic test code organized, provides various mock objects and the SCID file location.</p>
+        <p><em><strong>Running test/s with tester.py</strong></em></p>
+        <blockquote>
+            <p>python tester.py run &lt;optional --name | -n&gt; &lt;test_1_name&gt; &lt;test_1_name&gt; [optional: pytest | pester arguments]</p>
+        </blockquote>
+        <p>Example:</p>
+        <blockquote>
+            <p>python tester.py run -n configure_vlcm oneview
+                If test name is not provided, all test will be ran</p>
+        </blockquote>
+        <p>The SCID used for the test run will be taken from <code>codebase/SCID/xxx.json</code><br>
+            The Run will also produce the test run code-coverage report.</p>
+        <h2>
+            <a id="test-boilerplate-code-generated-with-testerpy-create-" class="anchor" href="#test-boilerplate-code-generated-with-testerpy-create-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Test Boilerplate code generated with "tester.py create ..."</h2>
+        <p>Foundational idea behind the auto-generated boilerplate code :- <br>
+            <strong>(1)</strong> The static configuration of VM Element solution components against which the automation code is run, is defined through the SCID JSON. <br><br>
+            <strong>(2)</strong> The automation code would call certain asynchronous external calls either through available API interface or using some library or direct ssh commands to
+            configure the solution or get information from it. <br><br>
+            <strong>(3)</strong> The SAT Tasks points to a caller script (defined via content.csv), which calls the required automation script (the callee script). The callee script again calls various other code in different
+            modules and gets the task done. <br><br></p>
+        <p>For unit test cases to work, the solution components are mocked and automation is run on these mocked components. For a given test run, above points <strong>(1)</strong> and <strong>(2)</strong>
+            tells about the behaviour of the mocked object, i.e. it will have some static values from point <strong>(1)</strong> and then there is some dynamic values based on the component
+            state which will be derived through asynchronous calls (from point <strong>(2)</strong>).
+            An over-simpified example - a vehicle having static value of 4 tyres, and having dynamic value speed that depends on the state of the vehicle.</p>
+        <p>Continuing with the above example, it will be redundant if all devleopers write the mocked object for the vehicle object static values for a given test run,
+            and so the test suite's boilerplate code provides mocked objects for various solution components configured with static values from SCID JSON.
+            Developers needs to just augment the dynamic values to the mocked solution components (using the provided dynamic_states) for each of the different
+            test cases scenario and also to reach higher test code-coverage.</p>
+        <p>The boilerplate code standardize the way for defining the dynamic states and also tries to provide an organized test code in standard way that is common
+            across different task automation tests.</p>
+        <p>For point (3), the boilerplate code provides SCID path variable as all caller script will use it to set parameters to the callee script.</p>
+        <h3>
+            <a id="python-1" class="anchor" href="#python-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Python</h3>
+        <p>Examining the python test boilerplate code:-</p>
+        <p><img src="images/python_boilerplate_code.png" alt="Python Boilerplate code"></p>
+        <p>lines 1 - 4: Imports based on the test framework and required modules <br><br>
+            lines 5 - 10: Defines the 'filePath' and 'packageRoot' constants commonly used to import the plugin library code that are being tested. <br><br>
+            lines 11 - 23: Provides a standard way to define 'n' number of <code>dynamic states</code>. The variable <code>base_state</code> provides values that needs to be common across
+            dynamic states, like credentials, however, they would get overrided if those properties are also defined in dynamic state. Line 22, provides the merging
+            of base state with dynamic states. <br><br>
+            lines 24 - 34: Augments dynamic state to the pyvmomi's Service Instance object. On line 27, method 'op' will have 'state' in
+            it's scope. This method is called for each and every dynamic state one by one, producing 'n; test cases for 'n' dynamic states. <br><br>
+            line 35: Dynamic states are provided are provided as parameter one by one. Click for docs on <a href="https://docs.pytest.org/en/6.2.x/parametrize.html">parameterize</a>. <br><br>
+            line 36: The test case method. Here, 'state' will have a state object from dynamic objects array, line 35, will auto fill this
+            variable. 'mock_objects' provides the pre-mocked object provided by the test-suite that can be directly used saving
+            redundant effort. See <a href="#mock-objects">Mock Objects</a> below for more information <br><br>
+            line 37: Example on how to use the 'mock_objects' dictionary that will have mock object for various solution components. Currently,
+            it provides the pyvmomi's 'SmartConnectNoSSL' which returns the pyvmomi's 'ServiceInstance' mocked object; and a
+            mock object for 'request' that has advanced custom needs for test request response fulfilled. More on this <a href="#mock_smartconnectnossl">below</a> <br><br>
+            line 38-40: provides the SCID file path in a standard way. This makes sure, all test cases in the test suite use the same
+            SCID when all are run together. <br><br>
+            line 41:  This is where developer starts writing the test, i.e. calling the automation script.
+            line 43, gives the example that it is just the same things as calling the script in the caller script. <br><br>
+            line 44-48: Hints that all states should have a top level property called 'name' that have a meaning full name for the state. Though,
+            a name 'normal' could be a common name for the normal case. <br><br></p>
+        <h3>
+            <a id="powershell-1" class="anchor" href="#powershell-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>PowerShell</h3>
+        <p>Currently, generation of PowerShell boilerplate code has not been implemented yet, though the standard directory structure
+            and test file is created. The basic idea as mentioned above remains same and developers can contribute to the implementation.
+            Also, the tester.py has the logic to run the PowerShell test cases.</p>
+        <h2>
+            <a id="mock-objects" class="anchor" href="#mock-objects" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Mock Objects</h2>
+        <p>As mentioned earlier, for testing, mocking of solution components is required. Currently the test suite provides the
+            following mock objects:-</p>
+        <h3>
+            <a id="python-2" class="anchor" href="#python-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Python</h3>
+        <p>For Python code testing, <a href="https://docs.pytest.org/en/6.2.x/contents.html">pytest</a> is used and mock object are provided
+            to all test cases as a whole test <code>session</code> scoped <a href="https://docs.pytest.org/en/6.2.x/fixture.html">fixture</a> and are defined in 'conftest.py'</p>
+        <h4>
+            <a id="mock_smartconnectnossl" class="anchor" href="#mock_smartconnectnossl" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>mock_SmartConnectNoSSL</h4>
+        <p>In summary, the 'mock_SmartConnectNoSSL' provided the mocked 'service instace' object of pyvmomi. The service instance
+            object is provided with properties and methods mocked <strong>as per the SCID JSON</strong>.
+            Like si.content.viewManager.CreateContainerView will give the response of how it would have given when dealing with
+            such actual call the the service instance api. The dynamic part of the response, is augemented from the developer's
+            defined state using the 'augmentStateToVim' as mentioned in the boilerplate section. Since it mocks the 'SmartConnectNoSSL'
+            it also provides a way to validate the call to the function 'SmartConnectNoSSL' from the code being tested, i.e. if the
+            credentials that are passed from the code to the function 'SmartConnectNoSSL' was correct.</p>
+        <p>It is to be noted that this object is created using SCID JSON, and so a code file named 'testSCIDutils.py' is written
+            which parses the SCID for various required information about the staic properites in the 'service instance'. The 'testSCIDutils.py'
+            if the SCID is modified structurally, and so all python test cases will fail unless this single file - 'testSCIDutils.py' is fixed.
+            However, to limit the amount of changes, the code in 'testSCIDutils.py' has defined various constants for the json path it uses, and
+            all other code in the file uses the constants. Hence, such fixes based on SCID modification will be just fixing thouse paths/regexes and
+            they are not many as 'service instance' that represents a VMWare component just needs straighforward information as what has been seen so far.</p>
+        <h4>
+            <a id="mock_requests" class="anchor" href="#mock_requests" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>mock_requests</h4>
+        <p>This provides mock for the python 'request' module in a way that allows responses based on the developer's dynamic state, along with the context
+            where the request was called, also developer can define what should be response during repeated same request call.
+            It will be simple to see how a developer can define declaratively the behaviour of the request from a state snippet :-
+            <img src="images/python_boilerplate_dynamicstate_request.png" alt="Request mock with dynamic states"></p>
+        <p>Above, in the dynamic state snippet, reading the first object, 'userStackHisotry' define some of the previous calls in call-stack when the request call was
+            made, i.e. from method 'update.vcsa', the call came to 'update_vm' and then the call to python module 'request' is made. Args will tell
+            about the args to the 'request' function and finally 'resp' will be the response in this exact scenario.
+            Now, in the second object, though the call stack is same, but url is different, i.e. '/rest/appliance/update'. Such API call like here for status updates,
+            provides reponses that tells the progress of the update task, which will start somewhere between 0% to 100%. Hence, "resp" here is an array instead an
+            object, and each further call with same call-stack and same url, will given different result, in this case - first 10, then 50 and then 100% (normal case)</p>
+        <hr>
+        <h1>
+            <a id="setting-up-the-application" class="anchor" href="#setting-up-the-application" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setting up the application</h1>
+        <h3>
+            <a id="basic-architecture--" class="anchor" href="#basic-architecture--" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Basic Architecture  <img src="images/pr_checks_architecture.png" alt="Basic Architecture">
+        </h3>
+        <h4>
+            <a id="1-clone-the-repository---cd-into-the-repository-folder-thus-created-and-then-run-all-below-commands" class="anchor" href="#1-clone-the-repository---cd-into-the-repository-folder-thus-created-and-then-run-all-below-commands" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>1.</em> Clone the repository -&gt; 'cd' into the repository folder thus created and then run all below commands.</h4>
+        <h4>
+            <a id="1-a-make-sure-a-env-file-at-the-root-of-the-cloned-project-with-all-the-keys-mentioned-in-env_templatetxt-set-env-is-put-into-gitignore-and-so-its-not-part-of-the-repository-app-may-fail-to-start-if-expected-enviornment-variables-are-not-set" class="anchor" href="#1-a-make-sure-a-env-file-at-the-root-of-the-cloned-project-with-all-the-keys-mentioned-in-env_templatetxt-set-env-is-put-into-gitignore-and-so-its-not-part-of-the-repository-app-may-fail-to-start-if-expected-enviornment-variables-are-not-set" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>1 (a).</em> Make sure a <code>.env</code> file at the root of the cloned project with all the keys mentioned in <code>env_template.txt</code> set. <code>.env</code> is put into <code>.gitignore</code> and so it's not part of the repository. App may fail to start if expected enviornment variables are not set.</h4>
+        <h4>
+            <a id="2-build-the-docker-image-npm-run-dockerbuild-or-npm-run-dockerbuild-dev-for-development-enablement-more-information-about-development-given-in-below-sections" class="anchor" href="#2-build-the-docker-image-npm-run-dockerbuild-or-npm-run-dockerbuild-dev-for-development-enablement-more-information-about-development-given-in-below-sections" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>2.</em> Build the docker image: <code>npm run docker:build</code> OR <code>npm run docker:build-dev</code> for development enablement. More information about development given in below sections.</h4>
+        <h4>
+            <a id="3-create-and-run-container-from-the-image-npm-run-dockerrun-or-npm-run-dockerrun-dev-to-start-container-with-development-enablement" class="anchor" href="#3-create-and-run-container-from-the-image-npm-run-dockerrun-or-npm-run-dockerrun-dev-to-start-container-with-development-enablement" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>3.</em> Create and run container from the image: <code>npm run docker:run</code> OR <code>npm run docker:run-dev</code> to start container with development enablement</h4>
+        <h3>
+            <a id="only-if-development-" class="anchor" href="#only-if-development-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Only if development:-</h3>
+        <h4>
+            <a id="4-go-inside-the-container-docker-exec--it-pr-checks-bash" class="anchor" href="#4-go-inside-the-container-docker-exec--it-pr-checks-bash" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>4.</em> Go inside the container: <code>docker exec -it pr-checks bash</code>
+        </h4>
+        <h4>
+            <a id="5-install-dependencies-npm-i" class="anchor" href="#5-install-dependencies-npm-i" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>5.</em> Install dependencies: <code>npm i</code>
+        </h4>
+        <h4>
+            <a id="6-a-run-the-application-npm-start" class="anchor" href="#6-a-run-the-application-npm-start" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>6 (a).</em> Run the application: <code>npm start</code>
+        </h4>
+        <h4>
+            <a id="6-b-or-run-the-application-with-debugger-started-listening-on-port-9229-npm-run-startdebug" class="anchor" href="#6-b-or-run-the-application-with-debugger-started-listening-on-port-9229-npm-run-startdebug" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>6 (b).</em> Or, Run the application with debugger started [listening on port <code>9229</code>]: <code>npm run start:debug</code>
+        </h4>
+        <h4>
+            <a id="7-provide-on-prompt--your-github-personal-access-token-github-pat-and-your-github-usernamebh" class="anchor" href="#7-provide-on-prompt--your-github-personal-access-token-github-pat-and-your-github-usernamebh" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>7. Provide on prompt- your github personal access token (github PAT) and your github usernamebh</h4>
+    </section>
+
+</div>
+<!--[if !IE]><script>fixScale(document);</script><![endif]-->
+
+</body>
+</html>
